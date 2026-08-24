@@ -96,6 +96,10 @@ def home():
     </html>
     """
     html += '<h1>My Movie Watchlist</h1>'
+    html += '<form method="GET" action="/search">'
+    html += '<input type="text" name="query" placeholder="Search by title or genre">'
+    html += '<button type="submit">Search</button>'
+    html += '</form>'
     html += '<form method="POST" action="/add">'
     html += '<input type="text" name="title" placeholder="Movie Title" required>'
     html += '<input type="text" name="genre" placeholder="Genre" required>'
@@ -145,6 +149,64 @@ def delete_movie(id):
     conn.commit()
     conn.close()
     return redirect(url_for("home"))
+
+@app.route("/search/")
+def search():
+    query = request.args.get("query")
+
+    print(f"DEBUG: User searched for: '{query}'")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM movies WHERE title LIKE ? OR genre LIKE ?", (f"%{query}%", f"%{query}%"))
+    movies = cursor.fetchall()
+    conn.close()
+
+    html = """
+    <html>
+    <head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            margin: 40px;
+            color: #eee;
+        }
+        h1 {
+            color: #e94560;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #16213e;
+            color: white;
+            margin: 5px;
+            padding: 10px;
+            border-radius: 8px;
+            width: 400px;
+        }
+        a {
+            color: white;
+            background-color: #2ecc71;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+    </style>
+    </head>
+    <body>
+    """
+    html += "<h1>Search Results</h1>"
+    html += "<ul>"
+    for movie in movies:
+        html += f"<li>{movie[1]} ({movie[2]})</li>"
+    html += "</ul>"
+    html += "<a href='/'>Back to Home</a>" 
+    html += "</body></html>"
+    return html
+     
 
 if __name__ == "__main__":
     create_table()
